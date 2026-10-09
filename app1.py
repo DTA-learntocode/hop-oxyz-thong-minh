@@ -1,94 +1,72 @@
+import cv2
 import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 
 st.set_page_config(
-    page_title="Hộp Oxyz Thông Minh - Mô hình 3D", layout="wide"
+    page_title="Hộp Oxyz Thông Minh - Camera AI", layout="wide"
 )
 
-st.markdown(
-    "### 🌐 Mô hình Quỹ Đạo Bắn 3D Tương Tác (Chiến dịch Cứu trợ / Oxyz)"
-)
+st.markdown("### 📷 Camera AI & Mô hình Quỹ Đạo Bắn 3D")
 
-st.sidebar.header("🎛️ Điều chỉnh Tọa độ vật thể")
-x_phao = st.sidebar.slider("Tọa độ X (Pháo cối)", 0.0, 10.0, 2.0, 0.5)
-y_phao = st.sidebar.slider("Tọa độ Y (Pháo cối)", 0.0, 10.0, 1.0, 0.5)
-z_phao = 0.0  # Pháo cối nằm trên mặt đất
+# Mở webcam (0 là camera mặc định của máy)
+cap = cv2.VideoCapture(0)
 
-x_máy_bay = st.sidebar.slider("Tọa độ X (Máy bay)", 0.0, 10.0, 8.0, 0.5)
-y_máy_bay = st.sidebar.slider("Tọa độ Y (Máy bay)", 0.0, 10.0, 6.0, 0.5)
-z_máy_bay = st.sidebar.slider("Cao độ Z (Máy bay)", 0.0, 10.0, 5.0, 0.5)
+col1, col2 = st.columns(2)
 
-# Tạo figure 3D bằng Plotly
-fig = go.Figure()
+with col1:
+    st.subheader("Khung hình Camera trực tiếp")
+    camera_placeholder = st.empty()
+    run_cam = st.checkbox("Bật Camera", value=True)
 
-# 1. Vẽ điểm Pháo cối (Z = 0.0)
-fig.add_trace(
-    go.Scatter3d(
-        x=[x_phao],
-        y=[y_phao],
-        z=[z_phao],
-        mode="markers+text",
-        marker=dict(size=8, color="red"),
-        text=[f"Pháo cối (Z={z_phao})"],
-        textposition="top center",
-        name="Pháo cối",
+with col2:
+    st.subheader("Mô hình 3D Oxyz")
+
+    # Nhận giá trị tọa độ từ giao diện hoặc mô phỏng từ AI
+    x_phao = st.slider("Tọa độ X (Pháo)", 0.0, 10.0, 2.0, 0.5)
+    y_phao = st.slider("Tọa độ Y (Pháo)", 0.0, 10.0, 1.0, 0.5)
+    z_phao = 0.0
+
+    x_mb = st.slider("Tọa độ X (Mục tiêu)", 0.0, 10.0, 8.0, 0.5)
+    y_mb = st.slider("Tọa độ Y (Mục tiêu)", 0.0, 10.0, 6.0, 0.5)
+    z_mb = st.slider("Cao độ Z (Mục tiêu)", 0.0, 10.0, 5.0, 0.5)
+
+    # Vẽ biểu đồ 3D
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter3d(
+            x=[x_phao, x_mb],
+            y=[y_phao, y_mb],
+            z=[z_phao, z_mb],
+            mode="lines+markers",
+            marker=dict(size=8, color=["red", "cyan"]),
+            line=dict(color="red", width=5),
+            name="Quỹ đạo",
+        )
     )
-)
-
-# 2. Vẽ điểm Máy bay (Z cao độ)
-fig.add_trace(
-    go.Scatter3d(
-        x=[x_máy_bay],
-        y=[y_máy_bay],
-        z=[z_máy_bay],
-        mode="markers+text",
-        marker=dict(size=10, color="cyan", symbol="diamond"),
-        text=[f"Máy bay (Z={z_máy_bay})"],
-        textposition="top center",
-        name="Máy bay",
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(range=[0, 10]),
+            yaxis=dict(range=[0, 10]),
+            zaxis=dict(range=[0, 10]),
+        ),
+        margin=dict(l=0, r=0, b=0, t=0),
     )
-)
+    st.plotly_chart(fig, use_container_width=True)
 
-# 3. Vẽ đường đạn thẳng nối từ Pháo cối đến Máy bay (Màu đỏ)
-fig.add_trace(
-    go.Scatter3d(
-        x=[x_phao, x_máy_bay],
-        y=[y_phao, y_máy_bay],
-        z=[z_phao, z_máy_bay],
-        mode="lines",
-        line=dict(color="red", width=6),
-        name="Đường đạn thẳng",
-    )
-)
+# Xử lý khung hình camera
+if run_cam:
+    ret, frame = cap.read()
+    if ret:
+        # Chuyển màu từ BGR sang RGB để Streamlit hiển thị đúng màu
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        camera_placeholder.image(
+            frame, channels="RGB", use_container_width=True
+        )
+    else:
+        st.warning("Không thể kết nối với webcam.")
+else:
+    camera_placeholder.info("Camera đang tắt.")
 
-# 4. Vẽ tam giác hình chiếu xuống mặt phẳng đáy Oxy (Màu xanh đứt nét)
-fig.add_trace(
-    go.Scatter3d(
-        x=[x_máy_bay, x_máy_bay, x_phao, x_máy_bay],
-        y=[y_máy_bay, y_phao, y_phao, y_máy_bay],
-        z=[0, 0, 0, 0],
-        mode="lines",
-        line=dict(color="blue", width=3, dash="dash"),
-        name="Tam giác hình chiếu",
-    )
-)
-
-# Cấu hình không gian trục Oxyz
-fig.update_layout(
-    scene=dict(
-        xaxis=dict(range=[0, 11], title="Trục Ox"),
-        yaxis=dict(range=[0, 11], title="Trục Oy"),
-        zaxis=dict(range=[0, 11], title="Trục Oz (0-11)"),
-        camera=dict(eye=dict(x=1.5, y=1.5, z=1.2)),
-    ),
-    margin=dict(l=0, r=0, b=0, t=30),
-    legend=dict(x=0.05, y=0.9),
-)
-
-st.plotly_chart(fig, use_container_width=True)
-
-st.info(
-    "💡 Bạn có thể dùng thanh trượt ở menu bên trái để thay đổi tọa độ hoặc dùng"
-    " chuột xoay trực tiếp mô hình 3D!"
-)
+# Giải phóng camera khi dừng app
+cap.release()
