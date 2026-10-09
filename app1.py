@@ -1,74 +1,28 @@
-import cv2
 import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 
 st.set_page_config(
-    page_title="Hộp Oxyz Thông Minh - AI Camera", layout="wide"
+    page_title="Hộp Oxyz Thông Minh - Mô hình 3D", layout="wide"
 )
 
 st.markdown(
-    "### 🌐 AI Camera Radar - Mô hình Quỹ Đạo Bắn 3D Tương Tác (Hộp Oxyz)"
+    "### 🌐 Mô hình Quỹ Đạo Bắn 3D Tương Tác (Chiến dịch Cứu trợ / Oxyz)"
 )
 
-# Sidebar chọn chế độ
-mode = st.sidebar.radio(
-    "Chọn chế độ điều khiển:",
-    ["Thủ công (Thanh trượt)", "Tự động (AI Camera - Webcam)"],
-)
+st.sidebar.header("🎛️ Điều chỉnh Tọa độ vật thể")
+x_phao = st.sidebar.slider("Tọa độ X (Pháo cối)", 0.0, 10.0, 2.0, 0.5)
+y_phao = st.sidebar.slider("Tọa độ Y (Pháo cối)", 0.0, 10.0, 1.0, 0.5)
+z_phao = 0.0  # Pháo cối nằm trên mặt đất
 
-# Khởi tạo tọa độ mặc định
-x_phao, y_phao, z_phao = 2.0, 1.0, 0.0
-x_máy_bay, y_máy_bay, z_máy_bay = 8.0, 6.0, 5.0
+x_máy_bay = st.sidebar.slider("Tọa độ X (Máy bay)", 0.0, 10.0, 8.0, 0.5)
+y_máy_bay = st.sidebar.slider("Tọa độ Y (Máy bay)", 0.0, 10.0, 6.0, 0.5)
+z_máy_bay = st.sidebar.slider("Cao độ Z (Máy bay)", 0.0, 10.0, 5.0, 0.5)
 
-if mode == "Thủ công (Thanh trượt)":
-  st.sidebar.header("🎛️ Điều chỉnh Tọa độ")
-  x_phao = st.sidebar.slider("Tọa độ X (Pháo cối)", 0.0, 10.0, 2.0, 0.5)
-  y_phao = st.sidebar.slider("Tọa độ Y (Pháo cối)", 0.0, 10.0, 1.0, 0.5)
-  x_máy_bay = st.sidebar.slider("Tọa độ X (Máy bay)", 0.0, 10.0, 8.0, 0.5)
-  y_máy_bay = st.sidebar.slider("Tọa độ Y (Máy bay)", 0.0, 10.0, 6.0, 0.5)
-  z_máy_bay = st.sidebar.slider("Cao độ Z (Máy bay)", 0.0, 10.0, 5.0, 0.5)
-
-else:
-  st.sidebar.header("📷 AI Camera Nhận diện")
-  st.sidebar.info("Hệ thống đang mở Webcam liên tục...")
-
-  # Dùng st.checkbox làm công tắc bật/tắt camera an toàn
-  run_cam = st.checkbox("Bật Camera Radar", value=False)
-  camera_placeholder = st.empty()
-  stop_button = st.button("Dừng Camera")
-
-  if run_cam and not stop_button:
-    cap = cv2.VideoCapture(0)  # Mở webcam mặc định của máy tính
-
-    # Vòng lặp liên tục cập nhật khung hình từ webcam để không bị đứng hình
-    while cap.isOpened() and run_cam and not stop_button:
-      ret, frame = cap.read()
-      if not ret:
-        st.warning(
-          "Không thể kết nối với Webcam. Vui lòng kiểm tra lại thiết bị!"
-        )
-        break
-
-      # Xử lý lật gương khung hình cho tự nhiên và chuyển màu sang RGB
-      frame = cv2.flip(frame, 1)
-      frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-      # Hiển thị video trực tiếp lên giao diện web
-      camera_placeholder.image(
-        frame_rgb,
-        caption="Đang quét không gian Hộp Oxyz (Live Webcam)",
-        channels="RGB",
-      )
-
-      # (Tùy chọn) Chèn logic gọi mô hình AI Teachable Machine ở đây để nhận diện tọa độ x, y, z thực tế từ biến `frame`
-
-    cap.release()
-
-# --- VẼ BIỂU ĐỒ 3D OXYZ ---
+# Tạo figure 3D bằng Plotly
 fig = go.Figure()
 
-# 1. Vẽ điểm Pháo cối
+# 1. Vẽ điểm Pháo cối (Z = 0.0)
 fig.add_trace(
     go.Scatter3d(
         x=[x_phao],
@@ -82,7 +36,7 @@ fig.add_trace(
     )
 )
 
-# 2. Vẽ điểm Máy bay
+# 2. Vẽ điểm Máy bay (Z cao độ)
 fig.add_trace(
     go.Scatter3d(
         x=[x_máy_bay],
@@ -96,7 +50,7 @@ fig.add_trace(
     )
 )
 
-# 3. Vẽ đường đạn thẳng nối từ Pháo cối đến Máy bay
+# 3. Vẽ đường đạn thẳng nối từ Pháo cối đến Máy bay (Màu đỏ)
 fig.add_trace(
     go.Scatter3d(
         x=[x_phao, x_máy_bay],
@@ -108,7 +62,7 @@ fig.add_trace(
     )
 )
 
-# 4. Vẽ tam giác hình chiếu xuống mặt phẳng đáy Oxy
+# 4. Vẽ tam giác hình chiếu xuống mặt phẳng đáy Oxy (Màu xanh đứt nét)
 fig.add_trace(
     go.Scatter3d(
         x=[x_máy_bay, x_máy_bay, x_phao, x_máy_bay],
@@ -120,6 +74,7 @@ fig.add_trace(
     )
 )
 
+# Cấu hình không gian trục Oxyz
 fig.update_layout(
     scene=dict(
         xaxis=dict(range=[0, 11], title="Trục Ox"),
@@ -132,3 +87,8 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
+st.info(
+    "💡 Bạn có thể dùng thanh trượt ở menu bên trái để thay đổi tọa độ hoặc dùng"
+    " chuột xoay trực tiếp mô hình 3D!"
+)
