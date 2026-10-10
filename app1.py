@@ -23,7 +23,8 @@ with col_left:
 
     st.markdown("#### ⚙️ Tọa độ các mốc chính (Theo chuẩn sa bàn):")
 
-    # Cấu hình các điểm cơ bản (O là gốc tọa độ 0,0,0)
+    # Cấu hình các điểm cơ bản
+    # O(0,0,0) là gốc tọa độ
     col_a1, col_a2, col_a3 = st.columns(3)
     with col_a1:
         xA = st.number_input("Ax", value=2.0, step=0.5)
@@ -63,10 +64,11 @@ with col_left:
     vec_CB = B - C
     vec_AB = B - A
 
-    # Chuyển kiểu dữ liệu numpy sang list thường để hiển thị công thức đẹp mắt
+    # Chuyển đổi mảng numpy sang list thông thường để hiển thị công thức đẹp mắt
     list_AC = [float(val) for val in vec_AC]
     list_CB = [float(val) for val in vec_CB]
     list_AB = [float(val) for val in vec_AB]
+
     check_nv1 = np.allclose(vec_AC + vec_CB, vec_AB)
 
     st.markdown(
@@ -98,6 +100,10 @@ with col_left:
 
     # --- NHIỆM VỤ 4 ---
     st.markdown("##### 📌 Nhiệm vụ 4: Trạm Radar mặt đất ($T_{\\min}$)")
+    st.info(
+        "Tìm điểm $M(x; y; 0)$ trên mặt phẳng đáy để $T = |MA + 2MB - MC|$ đạt"
+        " giá trị nhỏ nhất."
+    )
 
 
     # Hàm mục tiêu cho Nhiệm vụ 4
@@ -121,7 +127,7 @@ with col_left:
     )
 
 with col_right:
-    st.subheader("🌐 Mô hình Không gian 3D Oxyz Chuẩn Sa Bàn")
+    st.subheader("🌐 Mô hình Không gian 3D Oxyz Trực Quan")
 
     # Vẽ biểu đồ 3D bằng Plotly
     fig = go.Figure()
@@ -174,16 +180,13 @@ with col_right:
         )
     )
 
-    # Cấu hình khung không gian 3D với trục Oz thẳng đứng giữa sa bàn
+    # Cấu hình khung không gian 3D
     fig.update_layout(
         scene=dict(
-            xaxis=dict(range=[0, 11], title="Trục Ox (km)", zeroline=True),
-            yaxis=dict(range=[0, 11], title="Trục Oy (km)", zeroline=True),
-            zaxis=dict(range=[0, 11], title="Trục Oz (km)", zeroline=True),
-            # Khóa góc nhìn camera để Oz thẳng đứng, Ox sang phải, Oy hướng ra ngoài
-            camera=dict(
-                eye=dict(x=1.6, y=-1.6, z=1.2), up=dict(x=0, y=0, z=1)
-            ),
+            xaxis=dict(range=[0, 11], title="Trục Ox (km)"),
+            yaxis=dict(range=[0, 11], title="Trục Oy (km)"),
+            zaxis=dict(range=[0, 11], title="Trục Oz (km)"),
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.3)),
         ),
         margin=dict(l=0, r=0, b=0, t=30),
         legend=dict(x=0.0, y=0.9),
@@ -193,5 +196,6 @@ with col_right:
 
 st.markdown("---")
 st.caption(
-    "💡 Dự án STEM 'Hộp Oxyz Thông Minh' - Sẵn sàng nộp bài và chấm điểm."
+    "💡 Dự án STEM 'Hộp Oxyz Thông Minh' - Kết hợp Camera Web và Hình học"
+    " Không gian 3D."
 )
