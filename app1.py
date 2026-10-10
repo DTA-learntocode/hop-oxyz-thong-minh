@@ -63,11 +63,21 @@ with col_left:
     vec_AC = C - A
     vec_CB = B - C
     vec_AB = B - A
+
+    # Chuyển đổi mảng numpy sang list thông thường để hiển thị công thức đẹp mắt
+    list_AC = [float(val) for val in vec_AC]
+    list_CB = [float(val) for val in vec_CB]
+    list_AB = [float(val) for val in vec_AB]
+
     check_nv1 = np.allclose(vec_AC + vec_CB, vec_AB)
-    st.write(f"- $\\vec{{AC}} = {list(vec_AC)}$, $\\vec{{CB}} = {list(vec_CB)}$")
+
+    st.markdown(
+        f"- $\\vec{{AC}} = {list_AC}$, $\\vec{{CB}} = {list_CB}$, $\\vec{{AB}}"
+        f" = {list_AB}$"
+    )
     st.write(
-        f"- Kiểm chứng $\\vec{{AB}} = \\vec{{AC}} + \\vec{{CB}}$: "
-        f"**{'Đúng' if check_nv1 else 'Sai'}**"
+        f"- Kiểm chứng quy tắc ba điểm $\\vec{{AB}} = \\vec{{AC}} +"
+        f" \\vec{{CB}}$: **{'Đúng (Thỏa mãn)' if check_nv1 else 'Sai'}**"
     )
 
     # --- NHIỆM VỤ 2 ---
